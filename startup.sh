@@ -11,5 +11,7 @@ cd ./network-setup/
 ./network.sh createChannel
 echo Creato il network ed il canale
 
+#Deploying smart contract
+
 #Exiting the network directory
 cd ..

@@ -12,12 +12,12 @@ import (
 )
 
 func main() {
-	sellerChaincode, err := contractapi.NewChaincode(&chaincode.SmartContract{})
+	certificatorChaincode, err := contractapi.NewChaincode(&chaincode.SmartContract{})
 	if err != nil {
 		log.Panicf("Error creating certificator chaincode: %v", err)
 	}
 
-	if err := assetChaincode.Start(); err != nil {
+	if err := certificatorChaincode.Start(); err != nil {
 		log.Panicf("Error starting certificator chaincode: %v", err)
 	}
 }

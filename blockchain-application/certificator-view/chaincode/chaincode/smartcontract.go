@@ -22,7 +22,7 @@ type Asset struct {
 	CertType	string `json:"CertType"`
 	ExpireDate	string `json:"ExpireDate"`
 }
-//ID is calculated through the function SHA256 given the string owner+product+certtype+expiredate
+//ID is calculated through the function SHA256 given the string owner+product+certtype
 
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
@@ -51,8 +51,8 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, owner string, product string, certType string, expireDate string) error {
 	//Calculating SHA256 for the certificate
 	h := sha256.New()
-	h.Write([]byte(owner+product+certType+expireDate))
-	sha256_code := h.Sum(nil)
+	h.Write([]byte(owner+product+certType))
+	sha256_code := string(h.Sum(nil)[:])
 	
 	exists, err := s.AssetExists(ctx, sha256_code)
 	if err != nil {
@@ -109,8 +109,8 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	
 	//Calculating SHA256 for the certificate
 	h := sha256.New()
-	h.Write([]byte(owner+product+certType+expireDate))
-	sha256_code := h.Sum(nil)
+	h.Write([]byte(owner+product+certType))
+	sha256_code := string(h.Sum(nil)[:])
 
 	// overwriting original asset with new asset
 	asset := Asset{
@@ -125,7 +125,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
-	s.DeleteAsset(id)
+	s.DeleteAsset(ctx, id)
 	return ctx.GetStub().PutState(sha256_code, assetJSON)
 }
 
@@ -168,26 +168,6 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
-func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, ...) error {
-	// Proponi un prodotto per ottenere il certificato
-}
-
-// VerifyCertificate returns true if the certificate given exists and is still valid
-func (s *SmartContract) VerifyCertificate(ctx contractapi.TransactionContextInterface, hashCode string) error {
-	asset, err := s.ReadAsset(hashCode)
-	if err != nil {
-		return err
-	}
-	if asset == nil {
-		return false
-	}
-	if time.Parse("DD-MM-YYYY", asset.ExpireDate) >= time.Parse("DD-MM-YYYY", time.Now()) {
-		return true
-	} else {
-		return false
-	}
-}
-
 // GetAllAssets returns all assets found in world state
 func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*Asset, error) {
 	// range query with empty string for startKey and endKey does an
@@ -214,4 +194,108 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 	}
 
 	return assets, nil
+}
+
+// GetProductsPending returns all the products waiting for certification
+func (s *SmartContract) GetProductsPending(ctx contractapi.TransactionContextInterface) {
+	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var assets []*Asset
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var asset Asset
+		err = json.Unmarshal(queryResponse.Value, &asset)
+		if err != nil {
+			return nil, err
+		}
+		if asset.ExpireDate == "01/01/1980" || asset.Renew{
+			assets = append(assets, &asset)
+		}
+	}
+
+	return assets, nil
+}
+
+// EvaluateProduct approves or refuses a product in queue for a certificate
+func (s *SmartContract) EvaluateProduct(ctx contractapi.TransactionContextInterface, id string, evaluation bool) error {
+	var asset *Asset
+	asset, err := s.ReadAsset(ctx, id)
+	if err != nil {
+		return err
+	}
+	
+	if evaluation == true {
+		currentTime := time.Now().Add(time.Hour * 24 * 365)
+		asset.ExpireDate := string(currentTime.format("dd-MM-yyyy"))
+		
+		assetJSON, err := json.Marshal(asset)
+		if err != nil {
+			return err
+		}
+	
+		return ctx.GetStub().PutState(id, assetJSON)
+	} else {
+		return s.DeleteAsset(id)
+	}	
+}
+
+// RenewCertificates modifies the expiration date of the certificate
+func (s *SmartContract) RenewCertificate(ctx contractapi.TransactionContextInterface, id string) error {
+	var asset *Asset
+	asset, err := s.ReadAsset(ctx, id)
+	if err != nil {
+		return err
+	}
+	
+	if asset.Renew != true {
+		return fmt.Errorf("the asset %s does not have a pending request.",id)
+	}
+	
+	oldExpireDate := time.Parse(asset.ExpireDate)
+	today := time.Now()
+	
+	var newest time.Time
+	
+	if today.After(oldExpireDate) {
+		newest := today
+	} else {
+		newest := oldExpireDate
+	}
+	
+	currentTime := newest.Add(time.Hour * 24 * 365)
+	asset.ExpireDate := string(currentTime.format("dd-MM-yyyy"))
+	
+	assetJSON, err := json.Marshal(asset)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(id, assetJSON)
+}
+
+// InvalidateCertificate changes the expirationDate of a certificate to the day before the operation is submitted
+func (s *SmartContract) InvalidateCertificate(ctx contractapi.TransactionContextInterface, id string) {
+	var asset *Asset
+	asset, err := s.ReadAsset(ctx, id)
+	if err != nil {
+		return err
+	}
+	
+	yesterday := time.Now().Add(-24 * time.Hour())
+	asset.ExpireDate := string(yesterday.format("dd-MM-yyyy"))
+	
+	assetJSON, err := json.Marshal(asset)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(id, assetJSON)
 }

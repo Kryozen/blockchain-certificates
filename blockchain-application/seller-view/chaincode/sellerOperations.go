@@ -17,7 +17,7 @@ func main() {
 		log.Panicf("Error creating seller chaincode: %v", err)
 	}
 
-	if err := assetChaincode.Start(); err != nil {
+	if err := sellerChaincode.Start(); err != nil {
 		log.Panicf("Error starting seller chaincode: %v", err)
 	}
 }

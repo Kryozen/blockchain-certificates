@@ -18,17 +18,20 @@ github.com/gobuffalo/packd/internal/takeon/github.com/markbates/errx
 # github.com/gobuffalo/packr v1.30.1
 github.com/gobuffalo/packr
 # github.com/golang/protobuf v1.3.2
+## explicit
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/hyperledger/fabric-chaincode-go v0.0.0-20200424173110-d7076418f212
+## explicit
 github.com/hyperledger/fabric-chaincode-go/pkg/attrmgr
 github.com/hyperledger/fabric-chaincode-go/pkg/cid
 github.com/hyperledger/fabric-chaincode-go/shim
 github.com/hyperledger/fabric-chaincode-go/shim/internal
 # github.com/hyperledger/fabric-contract-api-go v1.1.0
+## explicit
 github.com/hyperledger/fabric-contract-api-go/contractapi
 github.com/hyperledger/fabric-contract-api-go/contractapi/utils
 github.com/hyperledger/fabric-contract-api-go/internal
@@ -37,6 +40,7 @@ github.com/hyperledger/fabric-contract-api-go/internal/utils
 github.com/hyperledger/fabric-contract-api-go/metadata
 github.com/hyperledger/fabric-contract-api-go/serializer
 # github.com/hyperledger/fabric-protos-go v0.0.0-20200424173316-dd554ba3746e
+## explicit
 github.com/hyperledger/fabric-protos-go/common
 github.com/hyperledger/fabric-protos-go/ledger/queryresult
 github.com/hyperledger/fabric-protos-go/ledger/rwset
@@ -59,6 +63,7 @@ github.com/xeipuuv/gojsonreference
 # github.com/xeipuuv/gojsonschema v1.2.0
 github.com/xeipuuv/gojsonschema
 # golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
+## explicit
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
@@ -66,6 +71,7 @@ golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
 # golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e
+## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.6

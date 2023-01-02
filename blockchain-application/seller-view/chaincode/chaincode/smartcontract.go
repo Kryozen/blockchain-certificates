@@ -80,7 +80,7 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 }
 
 // SubmitProduct adds a product to the list of the products waiting for a certification
-func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, owner string, product string, certType string) error {
+func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, owner string, product string, certType string) (string, error) {
 	//Calculating SHA256 for the certificate
 	h := sha256.New()
 	h.Write([]byte(owner+product+certType))
@@ -90,7 +90,7 @@ func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterfac
 	
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if exists {
 		return nil
@@ -106,10 +106,10 @@ func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterfac
 		
 		assetJSON, err := json.Marshal(asset)
 		if err != nil {
-			return err
+			return "", err
 		}
 
-		return ctx.GetStub().PutState(id, assetJSON)
+		return id, ctx.GetStub().PutState(id, assetJSON)
 	}
 }
 
@@ -173,13 +173,13 @@ func (s *SmartContract) RenewRequest(ctx contractapi.TransactionContextInterface
 	
 	asset, err := s.ReadAsset(ctx, id)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if asset == nil {
-		return false, nil
+		return nil
 	}
 	
-	asset.Renew := true
+	asset.Renew = true
 	
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {

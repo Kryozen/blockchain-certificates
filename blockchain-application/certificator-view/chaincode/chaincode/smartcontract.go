@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"crypto/sha256"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"time"
 )
 
 // SmartContract provides functions for managing an Asset
@@ -21,15 +22,16 @@ type Asset struct {
 	Product		string `json:"Product"`
 	CertType	string `json:"CertType"`
 	ExpireDate	string `json:"ExpireDate"`
+	Renew		bool   `json:"Renew"`
 }
 //ID is calculated through the function SHA256 given the string owner+product+certtype
 
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
-		{ID: "1fe656a7513296b13285a3d9a2a963e24e6461aa3603142fdf502b4b6cfcf90e", Owner: "Mattia", Product: "Pandoro", CertType: "D.O.P.", ExpireDate: "25/12/2023"},
-		{ID: "88ce84afa390ec97d5debc1c988f598cc27e4d87c5fdd38f09876c976ffb2885", Owner: "Simone", Product: "Cotechino", CertType: "I.G.P.", ExpireDate: "01/01/2024"},
-		{ID: "0ef8efcc68d6b365e4678fa4d6cbddaae93879242cf5a76522704ca45692dae4", Owner: "Antonella", Product: "Aglianico beneventano", CertType: "D.O.C.", ExpireDate: "09/04/2023"},
+		{ID: "1fe656a7513296b13285a3d9a2a963e24e6461aa3603142fdf502b4b6cfcf90e", Owner: "Mattia", Product: "Pandoro", CertType: "D.O.P.", ExpireDate: "25/12/2023", Renew: false},
+		{ID: "88ce84afa390ec97d5debc1c988f598cc27e4d87c5fdd38f09876c976ffb2885", Owner: "Simone", Product: "Cotechino", CertType: "I.G.P.", ExpireDate: "01/01/2024", Renew: false},
+		{ID: "0ef8efcc68d6b365e4678fa4d6cbddaae93879242cf5a76522704ca45692dae4", Owner: "Antonella", Product: "Aglianico beneventano", CertType: "D.O.C.", ExpireDate: "09/04/2023", Renew: false},
 	}
 
 	for _, asset := range assets {
@@ -68,6 +70,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		Product:	product,
 		CertType:	certType,
 		ExpireDate:	expireDate,
+		Renew:		false,
 	}
 	
 	assetJSON, err := json.Marshal(asset)
@@ -197,7 +200,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 }
 
 // GetProductsPending returns all the products waiting for certification
-func (s *SmartContract) GetProductsPending(ctx contractapi.TransactionContextInterface) {
+func (s *SmartContract) GetProductsPending(ctx contractapi.TransactionContextInterface) ([]*Asset, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
@@ -234,7 +237,7 @@ func (s *SmartContract) EvaluateProduct(ctx contractapi.TransactionContextInterf
 	
 	if evaluation == true {
 		currentTime := time.Now().Add(time.Hour * 24 * 365)
-		asset.ExpireDate := string(currentTime.format("dd-MM-yyyy"))
+		asset.ExpireDate = string(currentTime.Format("dd-MM-yyyy"))
 		
 		assetJSON, err := json.Marshal(asset)
 		if err != nil {
@@ -243,7 +246,7 @@ func (s *SmartContract) EvaluateProduct(ctx contractapi.TransactionContextInterf
 	
 		return ctx.GetStub().PutState(id, assetJSON)
 	} else {
-		return s.DeleteAsset(id)
+		return s.DeleteAsset(ctx, id)
 	}	
 }
 
@@ -259,19 +262,24 @@ func (s *SmartContract) RenewCertificate(ctx contractapi.TransactionContextInter
 		return fmt.Errorf("the asset %s does not have a pending request.",id)
 	}
 	
-	oldExpireDate := time.Parse(asset.ExpireDate)
+	oldExpireDate, err := time.Parse("dd-MM-yyyy", asset.ExpireDate)
+	if err != nil {
+		return err
+	}
+	
 	today := time.Now()
 	
 	var newest time.Time
 	
 	if today.After(oldExpireDate) {
-		newest := today
+		newest = today
 	} else {
-		newest := oldExpireDate
+		newest = oldExpireDate
 	}
 	
-	currentTime := newest.Add(time.Hour * 24 * 365)
-	asset.ExpireDate := string(currentTime.format("dd-MM-yyyy"))
+	currentTime := newest.AddDate(1,0,0)
+	asset.ExpireDate = string(currentTime.Format("dd-MM-yyyy"))
+	asset.Renew = false
 	
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -282,15 +290,15 @@ func (s *SmartContract) RenewCertificate(ctx contractapi.TransactionContextInter
 }
 
 // InvalidateCertificate changes the expirationDate of a certificate to the day before the operation is submitted
-func (s *SmartContract) InvalidateCertificate(ctx contractapi.TransactionContextInterface, id string) {
+func (s *SmartContract) InvalidateCertificate(ctx contractapi.TransactionContextInterface, id string) error {
 	var asset *Asset
 	asset, err := s.ReadAsset(ctx, id)
 	if err != nil {
 		return err
 	}
 	
-	yesterday := time.Now().Add(-24 * time.Hour())
-	asset.ExpireDate := string(yesterday.format("dd-MM-yyyy"))
+	yesterday := time.Now().Add(-24 * time.Hour)
+	asset.ExpireDate = string(yesterday.Format("dd-MM-yyyy"))
 	
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {

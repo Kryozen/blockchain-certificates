@@ -83,7 +83,7 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, owner string, product string, certType string) (string, error) {
 	//Calculating SHA256 for the certificate
 	
-	bs := h.Sum256(owner+product+certType)
+	bs := sha256.Sum256([]byte(owner+product+certType))
 	id := string(bs[:])
 	
 	expireDate := "1980-01-01"

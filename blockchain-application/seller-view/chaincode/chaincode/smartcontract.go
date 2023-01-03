@@ -82,15 +82,15 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 // SubmitProduct adds a product to the list of the products waiting for a certification
 func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, owner string, product string, certType string) (string, error) {
 	//Calculating SHA256 for the certificate
-	h := sha256.New()
-	h.Write([]byte(owner+product+certType))
 	
-	id := string(h.Sum(nil)[:])
+	bs := h.Sum256(owner+product+certType)
+	id := string(bs[:])
+	
 	expireDate := "1980-01-01"
 	
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Errore nella ricerca di un asset esistente, %v", err)
 	}
 	if exists {
 		return "", fmt.Errorf("La richiesta è già stata inserita")
@@ -106,7 +106,7 @@ func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterfac
 		
 		assetJSON, err := json.Marshal(asset)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("Errore nel marshaling: %v", err)
 		}
 
 		return id, ctx.GetStub().PutState(id, assetJSON)

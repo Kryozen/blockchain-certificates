@@ -9,8 +9,6 @@ cd ./network-setup/
 #Starting the network
 ./network.sh up
 ./network.sh createChannel
-
-
 #Deploying smart contract
 ./network.sh deployCC -ccn contract1 -ccp ../blockchain-application/seller-view/chaincode -ccl go
 

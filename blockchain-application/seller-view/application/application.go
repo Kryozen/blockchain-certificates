@@ -124,13 +124,13 @@ func main() {
 				certType, _ := reader.ReadString('\n')
 				certType = strings.Replace(certType, "\n", "", -1)
 				
-				id, err := contract.EvaluateTransaction("SubmitProduct", owner, product, certType)
+				id, err := contract.SubmitTransaction("SubmitProduct", owner, product, certType)
 				if err != nil {
 					log.Fatalf("Errore nella transazione: %v\n", err)
 					break
 				}
 				log.Println("Transazione SubmitProduct eseguita correttamente!\n")
-				log.Println("ID della richiesta: %s.\n", id)
+				log.Println("ID della richiesta: %s.\n", string(id))
 			case "2":
 				// Visualizzazione di tutti i certificati
 				fmt.Println("====================================")
@@ -153,14 +153,12 @@ func main() {
 					log.Fatalf("Errore nella transazione: %v\n", err)
 					break
 				}
-				fmt.Print(valid)
-				/*
-				if bool(valid) {
+				if string(valid) == "true" {
 					fmt.Println("Il certificato è valido.")
 				} else {
 					fmt.Println("Il certificato non è valido.")
 				}
-				*/
+				
 			case "4":
 				// Richiesta rinnovo
 				fmt.Println("====================================")

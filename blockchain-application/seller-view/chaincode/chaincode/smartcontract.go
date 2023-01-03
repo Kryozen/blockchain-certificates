@@ -30,9 +30,9 @@ type Asset struct {
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
-		{ID: "1fe656a7513296b13285a3d9a2a963e24e6461aa3603142fdf502b4b6cfcf90e", Owner: "Mattia", Product: "Pandoro", CertType: "D.O.P.", ExpireDate: "25/12/2023", Renew: false},
-		{ID: "88ce84afa390ec97d5debc1c988f598cc27e4d87c5fdd38f09876c976ffb2885", Owner: "Simone", Product: "Cotechino", CertType: "I.G.P.", ExpireDate: "01/01/2024", Renew: false},
-		{ID: "0ef8efcc68d6b365e4678fa4d6cbddaae93879242cf5a76522704ca45692dae4", Owner: "Antonella", Product: "Aglianico beneventano", CertType: "D.O.C.", ExpireDate: "09/04/2023", Renew: false},
+		{ID: "1fe656a7513296b13285a3d9a2a963e24e6461aa3603142fdf502b4b6cfcf90e", Owner: "Mattia", Product: "Pandoro", CertType: "D.O.P.", ExpireDate: "2023-12-25", Renew: false},
+		{ID: "88ce84afa390ec97d5debc1c988f598cc27e4d87c5fdd38f09876c976ffb2885", Owner: "Simone", Product: "Cotechino", CertType: "I.G.P.", ExpireDate: "2024-01-01", Renew: false},
+		{ID: "0ef8efcc68d6b365e4678fa4d6cbddaae93879242cf5a76522704ca45692dae4", Owner: "Antonella", Product: "Aglianico beneventano", CertType: "D.O.C.", ExpireDate: "2023-09-04", Renew: false},
 	}
 
 	for _, asset := range assets {
@@ -86,7 +86,7 @@ func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterfac
 	h.Write([]byte(owner+product+certType))
 	
 	id := string(h.Sum(nil)[:])
-	expireDate := "01/01/1980"
+	expireDate := "1980-01-01"
 	
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
@@ -125,7 +125,7 @@ func (s *SmartContract) VerifyCertificate(ctx contractapi.TransactionContextInte
 		return false, nil
 	}
 	
-	assetExpireTime, err := time.Parse("dd-MM-yyyy", asset.ExpireDate)
+	assetExpireTime, err := time.Parse("2006-01-02", asset.ExpireDate)
 	if err != nil {
 		return false, err
 	}
@@ -159,7 +159,7 @@ func (s *SmartContract) GetAllCertificates(ctx contractapi.TransactionContextInt
 		if err != nil {
 			return nil, err
 		}
-		if asset.ExpireDate != "01/01/1980" {
+		if asset.ExpireDate != "1980-01-01" {
 			assets = append(assets, &asset)
 		}
 	}

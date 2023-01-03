@@ -168,9 +168,6 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
-func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, ...) error {
-	// Proponi un prodotto per ottenere il certificato
-}
 
 // VerifyCertificate returns true if the certificate given exists and is still valid
 func (s *SmartContract) VerifyCertificate(ctx contractapi.TransactionContextInterface, hashCode string) error {

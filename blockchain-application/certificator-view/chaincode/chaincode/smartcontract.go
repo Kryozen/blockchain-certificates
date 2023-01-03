@@ -3,7 +3,7 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
-	"crypto/sha256"
+	"strings"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"time"
 )
@@ -29,9 +29,9 @@ type Asset struct {
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
-		{ID: "1fe656a7513296b13285a3d9a2a963e24e6461aa3603142fdf502b4b6cfcf90e", Owner: "Mattia", Product: "Pandoro", CertType: "D.O.P.", ExpireDate: "25/12/2023", Renew: false},
-		{ID: "88ce84afa390ec97d5debc1c988f598cc27e4d87c5fdd38f09876c976ffb2885", Owner: "Simone", Product: "Cotechino", CertType: "I.G.P.", ExpireDate: "01/01/2024", Renew: false},
-		{ID: "0ef8efcc68d6b365e4678fa4d6cbddaae93879242cf5a76522704ca45692dae4", Owner: "Antonella", Product: "Aglianico beneventano", CertType: "D.O.C.", ExpireDate: "09/04/2023", Renew: false},
+		{ID: "mattiapandorodop", Owner: "Mattia", Product: "Pandoro", CertType: "D.O.P.", ExpireDate: "25/12/2023", Renew: false},
+		{ID: "simonecotechinoigp", Owner: "Simone", Product: "Cotechino", CertType: "I.G.P.", ExpireDate: "01/01/2024", Renew: false},
+		{ID: "antonellaaglianicodoc", Owner: "Antonella", Product: "Aglianico beneventano", CertType: "D.O.C.", ExpireDate: "09/04/2023", Renew: false},
 	}
 
 	for _, asset := range assets {
@@ -51,21 +51,19 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 
 // CreateAsset issues a new asset to the world state with given details.
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, owner string, product string, certType string, expireDate string) error {
-	//Calculating SHA256 for the certificate
-	h := sha256.New()
-	h.Write([]byte(owner+product+certType))
-	sha256_code := string(h.Sum(nil)[:])
+	//Calculating ID
+	id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
 	
-	exists, err := s.AssetExists(ctx, sha256_code)
+	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
 	}
 	if exists {
-		return fmt.Errorf("the asset %s already exists", sha256_code)
+		return fmt.Errorf("the asset %s already exists", id)
 	}
 
 	asset := Asset{
-		ID:             sha256_code,
+		ID:             id,
 		Owner:		owner,
 		Product:	product,
 		CertType:	certType,
@@ -78,7 +76,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
-	return ctx.GetStub().PutState(sha256_code, assetJSON)
+	return ctx.GetStub().PutState(id, assetJSON)
 }
 
 // ReadAsset returns the asset stored in the world state with given id.
@@ -110,14 +108,12 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("the asset %s does not exist", id)
 	}
 	
-	//Calculating SHA256 for the certificate
-	h := sha256.New()
-	h.Write([]byte(owner+product+certType))
-	sha256_code := string(h.Sum(nil)[:])
+	//Calculating ID
+	id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
 
 	// overwriting original asset with new asset
 	asset := Asset{
-		ID:             sha256_code,
+		ID:             id,
 		Owner:		owner,
 		Product:	product,
 		CertType:	certType,
@@ -129,7 +125,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	s.DeleteAsset(ctx, id)
-	return ctx.GetStub().PutState(sha256_code, assetJSON)
+	return ctx.GetStub().PutState(id, assetJSON)
 }
 
 // DeleteAsset deletes an given asset from the world state.

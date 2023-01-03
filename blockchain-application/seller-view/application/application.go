@@ -130,7 +130,7 @@ func main() {
 					break
 				}
 				log.Println("Transazione SubmitProduct eseguita correttamente!\n")
-				log.Println("ID della richiesta: %s.\n", string(id))
+				log.Println("ID della richiesta: ", string(id))
 			case "2":
 				// Visualizzazione di tutti i certificati
 				fmt.Println("====================================")

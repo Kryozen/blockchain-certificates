@@ -4,9 +4,9 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
-	"crypto/sha256"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"time"
+	"strings"
 )
 
 // SmartContract provides functions for managing an Asset
@@ -25,14 +25,14 @@ type Asset struct {
 	ExpireDate	string `json:"ExpireDate"`
 	Renew		bool   `json:"Renew"`
 }
-//ID is calculated through the function SHA256 given the string owner+product+certtype
+//ID is obtained concatenating owner+product+certtype
 
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
-		{ID: "1fe656a7513296b13285a3d9a2a963e24e6461aa3603142fdf502b4b6cfcf90e", Owner: "Mattia", Product: "Pandoro", CertType: "D.O.P.", ExpireDate: "2023-12-25", Renew: false},
-		{ID: "88ce84afa390ec97d5debc1c988f598cc27e4d87c5fdd38f09876c976ffb2885", Owner: "Simone", Product: "Cotechino", CertType: "I.G.P.", ExpireDate: "2024-01-01", Renew: false},
-		{ID: "0ef8efcc68d6b365e4678fa4d6cbddaae93879242cf5a76522704ca45692dae4", Owner: "Antonella", Product: "Aglianico beneventano", CertType: "D.O.C.", ExpireDate: "2023-09-04", Renew: false},
+		{ID: "mattiapandorodop", Owner: "Mattia", Product: "Pandoro", CertType: "D.O.P.", ExpireDate: "2023-12-25", Renew: false},
+		{ID: "simonecotechinoigp", Owner: "Simone", Product: "Cotechino", CertType: "I.G.P.", ExpireDate: "2024-01-01", Renew: false},
+		{ID: "antonellaaglianicodoc", Owner: "Antonella", Product: "Aglianico beneventano", CertType: "D.O.C.", ExpireDate: "2023-09-04", Renew: false},
 	}
 
 	for _, asset := range assets {
@@ -81,10 +81,7 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 
 // SubmitProduct adds a product to the list of the products waiting for a certification
 func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, owner string, product string, certType string) (string, error) {
-	//Calculating SHA256 for the certificate
-	
-	bs := sha256.Sum256([]byte(owner+product+certType))
-	id := string(bs[:])
+	id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
 	
 	expireDate := "1980-01-01"
 	
@@ -114,10 +111,10 @@ func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterfac
 }
 
 // VerifyCertificate returns true if the certificate given exists and is still valid
-func (s *SmartContract) VerifyCertificate(ctx contractapi.TransactionContextInterface, hashCode string) (bool, error) {
+func (s *SmartContract) VerifyCertificate(ctx contractapi.TransactionContextInterface, toVerify string) (bool, error) {
 	var asset *Asset
 	
-	asset, err := s.ReadAsset(ctx, hashCode)
+	asset, err := s.ReadAsset(ctx, toVerify)
 	if err != nil {
 		return false, err
 	}

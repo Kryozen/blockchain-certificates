@@ -176,6 +176,10 @@ func (s *SmartContract) RenewRequest(ctx contractapi.TransactionContextInterface
 		return nil
 	}
 	
+	if asset.ExpireDate == "1980-01-01" {
+		return fmt.Errorf("Tale ID corrisponde ad un prodotto non ancora certificato.\n")
+	}
+	
 	asset.Renew = true
 	
 	assetJSON, err := json.Marshal(asset)

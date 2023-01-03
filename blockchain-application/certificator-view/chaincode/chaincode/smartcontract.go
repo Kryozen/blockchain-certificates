@@ -24,7 +24,7 @@ type Asset struct {
 	ExpireDate	string `json:"ExpireDate"`
 	Renew		bool   `json:"Renew"`
 }
-//ID is calculated through the function SHA256 given the string owner+product+certtype
+//ID is obtained concatenating owner + product + certType
 
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
@@ -109,11 +109,11 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 	
 	//Calculating ID
-	id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
+	new_id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
 
 	// overwriting original asset with new asset
 	asset := Asset{
-		ID:             id,
+		ID:             new_id,
 		Owner:		owner,
 		Product:	product,
 		CertType:	certType,
@@ -125,7 +125,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	s.DeleteAsset(ctx, id)
-	return ctx.GetStub().PutState(id, assetJSON)
+	return ctx.GetStub().PutState(new_id, assetJSON)
 }
 
 // DeleteAsset deletes an given asset from the world state.
@@ -229,6 +229,10 @@ func (s *SmartContract) EvaluateProduct(ctx contractapi.TransactionContextInterf
 	asset, err := s.ReadAsset(ctx, id)
 	if err != nil {
 		return err
+	}
+	
+	if asset.ExpireDate != "1980-01-01" {
+		return fmt.Errorf("Tale ID corrisponde ad un certificato già valido.")
 	}
 	
 	if evaluation == true {

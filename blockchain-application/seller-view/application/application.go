@@ -12,9 +12,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-
+	"bufio"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
+	"encoding/json"
+	"strings"
 )
 
 type Asset struct {
@@ -94,19 +96,22 @@ func main() {
 		
 	// SCELTA DELL'UTENTE
 	for {
+		fmt.Println("====================================")
 		fmt.Print("Selezionare l'operazione\n")
 		fmt.Print("1. Richiedere il certificato per un prodotto\n")
-		fmt.Print("2. Visualizzare i certificati esistenti\n"
+		fmt.Print("2. Visualizzare i certificati esistenti\n")
 		fmt.Print("3. Verificare validità di un certificato\n")
 		fmt.Print("4. Richiedere il rinnovo di un certificato\n")
 		fmt.Print("5. Visualizza i dettagli di un certificato\n")
-		fmt.Print("5. Exit\n")
+		fmt.Print("6. Exit\n")
+		fmt.Println("====================================")
 		op, _ := reader.ReadString('\n')
 		op = strings.Replace(op, "\n", "", -1)
 		
 		switch op {
 			case "1":
 				// Richiesta certificato
+				fmt.Println("====================================")
 				fmt.Print("Inserire il proprio nominativo: ")
 				owner, _ := reader.ReadString('\n')
 				owner = strings.Replace(owner, "\n", "", -1)
@@ -121,19 +126,80 @@ func main() {
 				
 				id, err := contract.EvaluateTransaction("SubmitProduct", owner, product, certType)
 				if err != nil {
-					log.Println("Errore nella transazione: %v\n", err)
+					log.Fatalf("Errore nella transazione: %v\n", err)
 					break
 				}
 				log.Println("Transazione SubmitProduct eseguita correttamente!\n")
 				log.Println("ID della richiesta: %s.\n", id)
-			case "5": break
+			case "2":
+				// Visualizzazione di tutti i certificati
+				fmt.Println("====================================")
+				fmt.Println("Caricando tutti i certificati...")
+				result , err := contract.EvaluateTransaction("GetAllCertificates")
+				if err != nil {
+					log.Fatalf("Errore nella transazione: %v\n", err)
+					break
+				}
+				fmt.Println(string(result))
+			case "3":
+				// Verificare validità
+				fmt.Println("====================================")
+				fmt.Print("Inserire l'id del certificato di cui si vuole verificare la validità: ")
+				id, _ := reader.ReadString('\n')
+				id = strings.Replace(id, "\n", "", -1)
+				
+				valid, err := contract.EvaluateTransaction("VerifyCertificate", id)
+				if err != nil {
+					log.Fatalf("Errore nella transazione: %v\n", err)
+					break
+				}
+				fmt.Print(valid)
+				/*
+				if bool(valid) {
+					fmt.Println("Il certificato è valido.")
+				} else {
+					fmt.Println("Il certificato non è valido.")
+				}
+				*/
+			case "4":
+				// Richiesta rinnovo
+				fmt.Println("====================================")
+				fmt.Print("Inserire l'id del certificato di cui si vuole richiedere il rinnovo: ")
+				id, _ := reader.ReadString('\n')
+				id = strings.Replace(id, "\n", "", -1)
+				
+				_, err := contract.SubmitTransaction("RenewRequest", id)
+				if err != nil {
+					log.Fatalf("Errore nella transazione: %v\n", err)
+					break
+				}
+				fmt.Println("La richiesta di rinnovo è in attesa di approvazione.")
+			case "5":
+				// Visualizzazione dettagli asset
+				fmt.Println("====================================")
+				fmt.Print("Inserire l'id del certificato di cui si vogliono visualizzare i dettagli: ")
+				id, _ := reader.ReadString('\n')
+				id = strings.Replace(id, "\n", "", -1)
+				
+				asset, err := contract.EvaluateTransaction("ReadAsset", id)
+				if err != nil {
+					log.Fatalf("Errore nella transazione: %v\n", err)
+					break
+				}
+				fmt.Println(string(asset))
+			default:
+				if op != "6" {
+					fmt.Println("====================================")
+					fmt.Println("Inserire un'opzione valida (1-6).")
+					break
+				}
+			}
+			if op == "6" {
+				break
 		}
 	}
-		
-		
-	
 
-	log.Println("============ application-golang ends ============")
+	log.Println("============ Terminazione dell'applicazione ============")
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
@@ -141,7 +207,8 @@ func populateWallet(wallet *gateway.Wallet) error {
 	credPath := filepath.Join(
 		"..",
 		"..",
-		"test-network",
+		"..",
+		"network-setup",
 		"organizations",
 		"peerOrganizations",
 		"org1.example.com",
@@ -150,7 +217,7 @@ func populateWallet(wallet *gateway.Wallet) error {
 		"msp",
 	)
 
-	certPath := filepath.Join(credPath, "signcerts", "cert.pem")
+	certPath := filepath.Join(credPath, "signcerts", "User1@org1.example.com-cert.pem")
 	// read the certificate pem
 	cert, err := ioutil.ReadFile(filepath.Clean(certPath))
 	if err != nil {

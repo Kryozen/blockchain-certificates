@@ -93,7 +93,7 @@ func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterfac
 		return "", err
 	}
 	if exists {
-		return nil
+		return "", fmt.Errorf("La richiesta è già stata inserita")
 	} else {
 		asset := Asset{
 			ID:		id,

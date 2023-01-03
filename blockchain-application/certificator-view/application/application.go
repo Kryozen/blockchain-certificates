@@ -92,6 +92,8 @@ func main() {
 			log.Fatalf("Failed to Submit transaction: %v", err)
 			return 
 		}
+	} else {
+		log.Println("I dati sono già presenti.")
 	}
 		
 	// SCELTA DELL'UTENTE
@@ -117,7 +119,7 @@ func main() {
 				if err != nil {
 					log.Fatalf("Errore nella transazione: %v\n", err)
 				}
-				fmt.Println(result)
+				fmt.Println(string(result))
 			case "2":
 				fmt.Println("====================================")
 				fmt.Println("Visualizzando le richieste di certificazione in sospeso")
@@ -126,24 +128,24 @@ func main() {
 				if err != nil {
 					log.Fatalf("Errore nella transazione: %v\n", err)
 				}
-				fmt.Println(result)
+				fmt.Println(string(result))
 			case "3":
 				fmt.Println("====================================")
 				fmt.Print("Inserisci l'ID della richiesta da valutare: ")
-				id := reader.ReadString('\n')
+				id, _ := reader.ReadString('\n')
 				id = strings.Replace(id, "\n", "", -1)
 				
 				fmt.Print("Inserisci l'esito della valutazione (Y/N): ")
-				esito := reader.ReadString('\n')
+				esito, _ := reader.ReadString('\n')
 				esito = strings.Replace(esito, "\n", "", -1)
 				
 				var err error
 				for {
 					if strings.ToLower(esito) == "y" {
-						err = contract.SubmitTransaction("EvaluateProduct", id, true)
+						_, err = contract.SubmitTransaction("EvaluateProduct", id, "true")
 						break
 					} else if strings.ToLower(esito) == "n" {
-						err = contract.SubmitTransaction("EvaluateProduct", id, false)
+						_, err = contract.SubmitTransaction("EvaluateProduct", id, "false")
 						break
 					}
 					fmt.Println("Inserire una valutazione valida (Y/N).")
@@ -156,10 +158,10 @@ func main() {
 				fmt.Println("====================================")
 				fmt.Print("Inserisci l'ID del certificato da rinnovare: ")
 				
-				id := reader.ReadString('\n')
+				id, _ := reader.ReadString('\n')
 				id = strings.Replace(id, "\n", "", -1)
 				
-				err = contract.SubmitTransaction("RenewCertificate", id)
+				_, err = contract.SubmitTransaction("RenewCertificate", id)
 				if err != nil {
 					log.Fatalf("Errore nella transazione: %v\n", err)
 				}
@@ -168,10 +170,10 @@ func main() {
 				fmt.Println("====================================")
 				fmt.Print("Inserisci l'ID del certificato da annullare: ")
 				
-				id := reader.ReadString('\n')
+				id, _ := reader.ReadString('\n')
 				id = strings.Replace(id, "\n", "", -1)
 				
-				err = contract.SubmitTransaction("InvalidateCertificate", id)
+				_, err = contract.SubmitTransaction("InvalidateCertificate", id)
 				if err != nil {
 					log.Fatalf("Errore nella transazione: %v\n", err)
 				}

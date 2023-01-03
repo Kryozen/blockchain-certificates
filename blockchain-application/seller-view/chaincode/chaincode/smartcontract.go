@@ -82,6 +82,7 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 // SubmitProduct adds a product to the list of the products waiting for a certification
 func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, owner string, product string, certType string) (string, error) {
 	id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
+	id = strings.Replace(id, " ", "", -1)
 	
 	expireDate := "1980-01-01"
 	

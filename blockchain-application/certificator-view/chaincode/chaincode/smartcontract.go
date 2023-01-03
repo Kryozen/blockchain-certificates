@@ -53,6 +53,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, owner string, product string, certType string, expireDate string) error {
 	//Calculating ID
 	id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
+	id = strings.Replace(id, " ", "", -1)
 	
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
@@ -110,6 +111,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	
 	//Calculating ID
 	new_id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
+	new_id = strings.Replace(new_id, " ", "", -1)
 
 	// overwriting original asset with new asset
 	asset := Asset{
@@ -215,7 +217,7 @@ func (s *SmartContract) GetProductsPending(ctx contractapi.TransactionContextInt
 		if err != nil {
 			return nil, err
 		}
-		if asset.ExpireDate == "01/01/1980" || asset.Renew{
+		if asset.ExpireDate == "1980-01-01" || asset.Renew {
 			assets = append(assets, &asset)
 		}
 	}

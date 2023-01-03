@@ -2,4 +2,5 @@
 /network-setup/*
 
 # Exclude wallets
-/*/wallet/
+/blockchain-application/seller-view/application/wallet/
+/blockchain-application/certificator-view/application/wallet/

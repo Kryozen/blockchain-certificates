@@ -1,0 +1,6 @@
+# Exclude network-setup
+/network-setup/*
+
+# Exclude wallets
+/blockchain-application/seller-view/application/wallet/
+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

@@ -3,6 +3,7 @@ package chaincode
 
 import (
 	"encoding/json"
+	"encoding/hex"
 	"fmt"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"time"
@@ -81,8 +82,15 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 
 // SubmitProduct adds a product to the list of the products waiting for a certification
 func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterface, owner string, product string, certType string) (string, error) {
-	id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
-	id = strings.Replace(id, " ", "", -1)
+	//Calculating SHA256 for the certificate
+	
+	str1 := owner + product + certType
+	h := sha256.New()
+	h.Write([]byte(str1))
+	bs := h.Sum(nil)
+	id := hex.EncodeToString(bs)
+	fmt.Println(id)
+
 	
 	expireDate := "1980-01-01"
 	

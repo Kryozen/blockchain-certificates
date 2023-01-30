@@ -4,10 +4,10 @@ package chaincode
 import (
 	"encoding/json"
 	"encoding/hex"
+	"crypto/sha256"
 	"fmt"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"time"
-	"strings"
 )
 
 // SmartContract provides functions for managing an Asset
@@ -89,7 +89,6 @@ func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterfac
 	h.Write([]byte(str1))
 	bs := h.Sum(nil)
 	id := hex.EncodeToString(bs)
-	fmt.Println(id)
 
 	
 	expireDate := "1980-01-01"

@@ -2,8 +2,9 @@ package chaincode
 
 import (
 	"encoding/json"
+	"encoding/hex"
+	"crypto/sha256"
 	"fmt"
-	"strings"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"time"
 )
@@ -25,7 +26,6 @@ type Asset struct {
 	Renew		bool   `json:"Renew"`
 }
 //ID is obtained concatenating owner + product + certType
-
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
@@ -52,8 +52,12 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 // CreateAsset issues a new asset to the world state with given details.
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, owner string, product string, certType string, expireDate string) error {
 	//Calculating ID
-	id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
-	id = strings.Replace(id, " ", "", -1)
+	
+	str1 := owner + product + certType
+	h := sha256.New()
+	h.Write([]byte(str1))
+	bs := h.Sum(nil)
+	id := hex.EncodeToString(bs)
 	
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
@@ -110,8 +114,11 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 	
 	//Calculating ID
-	new_id := strings.ToLower(owner + product + strings.Replace(certType, ".", "", -1))
-	new_id = strings.Replace(new_id, " ", "", -1)
+	str1 := owner + product + certType
+	h := sha256.New()
+	h.Write([]byte(str1))
+	bs := h.Sum(nil)
+	new_id := hex.EncodeToString(bs)
 
 	// overwriting original asset with new asset
 	asset := Asset{
@@ -300,7 +307,7 @@ func (s *SmartContract) InvalidateCertificate(ctx contractapi.TransactionContext
 	}
 	
 	yesterday := time.Now().Add(-24 * time.Hour)
-	asset.ExpireDate = string(yesterday.Format("dd-MM-yyyy"))
+	asset.ExpireDate = string(yesterday.Format("2006-01-02"))
 	
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {

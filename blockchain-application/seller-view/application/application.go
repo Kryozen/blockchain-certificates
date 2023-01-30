@@ -191,9 +191,9 @@ func main() {
 					fmt.Println("Inserire un'opzione valida (1-6).")
 					break
 				}
-			}
-			if op == "6" {
-				break
+		}
+		if op == "6" {
+			break
 		}
 	}
 

@@ -89,7 +89,6 @@ func (s *SmartContract) SubmitProduct(ctx contractapi.TransactionContextInterfac
 	h.Write([]byte(str1))
 	bs := h.Sum(nil)
 	id := hex.EncodeToString(bs)
-	fmt.Println(id)
 
 	
 	expireDate := "1980-01-01"

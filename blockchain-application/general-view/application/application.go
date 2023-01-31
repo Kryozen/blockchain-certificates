@@ -318,7 +318,18 @@ func main() {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 						break
 					}
-					fmt.Println(string(asset))
+					
+					sresult := string(asset)
+					sresult = strings.Replace(sresult, "[", "", -1)
+					sresult = strings.Replace(sresult, "]", "", -1)
+					sresult = strings.Replace(sresult, "}", "", -1)
+					sresult = strings.Replace(sresult, "{", "", -1)
+					sresult = strings.Replace(sresult, "\"", "", -1)
+					for _, field := range strings.Split(sresult, ",") {
+						dict := strings.Split(field, ":")
+						fmt.Println(dict[0] + ":",dict[1])
+					}
+					
 				default:
 					if op != "6" {
 						fmt.Println("====================================")

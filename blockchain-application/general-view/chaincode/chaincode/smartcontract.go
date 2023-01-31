@@ -285,7 +285,8 @@ func (s *SmartContract) EvaluateProduct(ctx contractapi.TransactionContextInterf
 	
 	if evaluation == true {
 		currentTime := time.Now().Add(time.Hour * 24 * 365)
-		asset.ExpireDate = string(currentTime.Format("dd-MM-yyyy"))
+				
+		asset.ExpireDate = currentTime.Format("2006-01-02")
 		
 		assetJSON, err := json.Marshal(asset)
 		if err != nil {
@@ -315,7 +316,12 @@ func (s *SmartContract) RenewCertificate(ctx contractapi.TransactionContextInter
 		return fmt.Errorf("the asset %s does not have a pending request.",id)
 	}
 	
-	oldExpireDate, err := time.Parse("dd-MM-yyyy", asset.ExpireDate)
+	
+	if err != nil {
+		return err
+	}
+	
+	oldExpireDate, err := time.Parse("2006-01-02", asset.ExpireDate)
 	if err != nil {
 		return err
 	}
@@ -331,7 +337,7 @@ func (s *SmartContract) RenewCertificate(ctx contractapi.TransactionContextInter
 	}
 	
 	currentTime := newest.AddDate(1,0,0)
-	asset.ExpireDate = string(currentTime.Format("dd-MM-yyyy"))
+	asset.ExpireDate = currentTime.Format("2006-01-02")
 	asset.Renew = false
 	
 	assetJSON, err := json.Marshal(asset)
@@ -356,7 +362,7 @@ func (s *SmartContract) InvalidateCertificate(ctx contractapi.TransactionContext
 	}
 	
 	yesterday := time.Now().Add(-24 * time.Hour)
-	asset.ExpireDate = string(yesterday.Format("dd-MM-yyyy"))
+	asset.ExpireDate = yesterday.Format("2006-01-02")
 	
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {

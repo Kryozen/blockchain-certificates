@@ -80,7 +80,7 @@ func main() {
 	
 	
 	// INIZIALIZZAZIONE DELLA BLOCKCHAIN
-	result , err := contract.EvaluateTransaction("GetAllCertificates")
+	result, err := contract.EvaluateTransaction("GetAllAssets")
 	
 	// GetAllCertificates restituisce un array di asset o di json?
 	var assets []Asset

@@ -4,10 +4,10 @@ package chaincode
 import (
 	"encoding/json"
 	"encoding/hex"
+	"crypto/sha256"
 	"fmt"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"time"
-	"strings"
 )
 
 // SmartContract provides functions for managing an Asset

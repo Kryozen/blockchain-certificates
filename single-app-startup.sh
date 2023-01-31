@@ -12,9 +12,8 @@ cd ./network-setup/
 
 
 #Deploying smart contract
-./network.sh deployCC -ccn contract1 -ccp ../blockchain-application/general-view/chaincode/sell-chaincode -ccl go
+./network.sh deployCC -ccn contract1 -ccp ../blockchain-application/general-view/chaincode/ -ccl go
 
-./network.sh deployCC -ccn contract2 -ccp ../blockchain-application/certificator-view/chaincode/cert-chaincode -ccl go
 
 #Exiting the network directory
 cd ..

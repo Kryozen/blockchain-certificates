@@ -11,8 +11,6 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 	"encoding/json"
 	"strings"
-	"crypto/sha256"
-	"encoding/hex"
 )
 
 type Asset struct {
@@ -69,22 +67,21 @@ func main() {
 		log.Fatalf("Failed to get network: %v", err)
 	}
 	
-	seller-contract := network.GetContract("contract1")
-	certificator-contract := network.GetContract("contract2")
+	contract := network.GetContract("contract1")
 	
 	// INIZIALIZZAZIONE DEL BUFFER DI INPUT
 	reader := bufio.NewReader(os.Stdin)
 	
 	
 	// INIZIALIZZAZIONE DELLA BLOCKCHAIN
-	result , err := certificator-contract.EvaluateTransaction("GetAllCertificates")
+	result , err := contract.EvaluateTransaction("GetAllCertificates")
 	
 	// GetAllCertificates restituisce un array di asset o di json?
 	var assets []Asset
 	err = json.Unmarshal(result, &assets)
 	if err != nil {
 		log.Println("--> Inizializzo il ledger")
-		_, err = certificator-contract.SubmitTransaction("InitLedger")
+		_, err = contract.SubmitTransaction("InitLedger")
 		if err != nil {
 			log.Fatalf("Failed to Submit transaction: %v", err)
 			return 
@@ -93,8 +90,8 @@ func main() {
 		log.Println("I dati sono già presenti.")
 	}
 	
-	var string admin_pwd = ""
-	var bool choice = false
+	admin_pwd := ""
+	admin := false
 	for {
 		fmt.Println("====================================")
 		fmt.Println("Selezionare la tipologia di utente:\n")
@@ -108,28 +105,34 @@ func main() {
 			fmt.Println("====================================")
 			fmt.Print("Inserisci la password (Lascia campo vuoto per uscire): ")
 			pwd, _ := reader.ReadString('\n')
-			pwd = strings.replace(pwd, "\n", "", -1)
+			pwd = strings.Replace(pwd, "\n", "", -1)
 			
-			if pwd == "":
+			if pwd == "" {
 				break
+			}
 			
 			admin_pwd = pwd
-			h := sha256.New()
-			h.write([]byte(pwd))
-			pwd = hex.EncodeToString(h.Sum(nil))
+			response, err := contract.EvaluateTransaction("CheckPwd", admin_pwd)
+			if err != nil {
+				log.Fatalf("Errore nella transazione: %v\n", err)
+			}
 			
-			if pwd != certificator-contract.getPwd() {
+			if string(response) == "false" {
 				admin_pwd = ""
 				fmt.Println("Password errata.\n")
 			} else {
-				choice = true
+				admin = true
 				break
 			}
+
+		} else {
+			break
 		}
 	}
 		
 	// SCELTA DELL'UTENTE
 	if admin {
+		// Vista del certificatore
 		for {
 			fmt.Println("====================================")
 			fmt.Print("Selezionare l'operazione\n")
@@ -148,20 +151,22 @@ func main() {
 					fmt.Println("====================================")
 					fmt.Println("Visualizzando tutti gli elementi")
 					
-					result, err := certificator-contract.EvaluateTransaction("GetAllAssets")
+					result, err := contract.EvaluateTransaction("GetAllAssets", admin_pwd)
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 					}
-					fmt.Println(string(result))
+					
+					format_print(result)
 				case "2":
 					fmt.Println("====================================")
 					fmt.Println("Visualizzando le richieste di certificazione in sospeso")
 					
-					result, err := certificator-contract.EvaluateTransaction("GetProductsPending")
+					result, err := contract.EvaluateTransaction("GetProductsPending", admin_pwd)
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 					}
-					fmt.Println(string(result))
+					
+					format_print(result)
 				case "3":
 					fmt.Println("====================================")
 					fmt.Print("Inserisci l'ID della richiesta da valutare: ")
@@ -175,10 +180,10 @@ func main() {
 					var err error
 					for {
 						if strings.ToLower(esito) == "y" {
-							_, err = certificator-contract.SubmitTransaction("EvaluateProduct", id, "true")
+							_, err = contract.SubmitTransaction("EvaluateProduct", admin_pwd, id, "true")
 							break
 						} else if strings.ToLower(esito) == "n" {
-							_, err = certificator-contract.SubmitTransaction("EvaluateProduct", id, "false")
+							_, err = contract.SubmitTransaction("EvaluateProduct", admin_pwd, id, "false")
 							break
 						}
 						fmt.Println("Inserire una valutazione valida (Y/N).")
@@ -194,7 +199,7 @@ func main() {
 					id, _ := reader.ReadString('\n')
 					id = strings.Replace(id, "\n", "", -1)
 					
-					_, err = certificator-contract.SubmitTransaction("RenewCertificate", id)
+					_, err = contract.SubmitTransaction("RenewCertificate", admin_pwd, id)
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 					}
@@ -206,7 +211,7 @@ func main() {
 					id, _ := reader.ReadString('\n')
 					id = strings.Replace(id, "\n", "", -1)
 					
-					_, err = certificator-contract.SubmitTransaction("InvalidateCertificate", id)
+					_, err = contract.SubmitTransaction("InvalidateCertificate", admin_pwd, id)
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 					}
@@ -252,7 +257,7 @@ func main() {
 					certType, _ := reader.ReadString('\n')
 					certType = strings.Replace(certType, "\n", "", -1)
 					
-					id, err := seller-contract.SubmitTransaction("SubmitProduct", owner, product, certType)
+					id, err := contract.SubmitTransaction("SubmitProduct", owner, product, certType)
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 						break
@@ -263,12 +268,13 @@ func main() {
 					// Visualizzazione di tutti i certificati
 					fmt.Println("====================================")
 					fmt.Println("Caricando tutti i certificati...")
-					result , err := seller-contract.EvaluateTransaction("GetAllCertificates")
+					result , err := contract.EvaluateTransaction("GetAllCertificates")
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 						break
 					}
-					fmt.Println(string(result))
+					
+					format_print(result)
 				case "3":
 					// Verificare validità
 					fmt.Println("====================================")
@@ -276,7 +282,7 @@ func main() {
 					id, _ := reader.ReadString('\n')
 					id = strings.Replace(id, "\n", "", -1)
 					
-					valid, err := seller-contract.EvaluateTransaction("VerifyCertificate", id)
+					valid, err := contract.EvaluateTransaction("VerifyCertificate", id)
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 						break
@@ -294,7 +300,7 @@ func main() {
 					id, _ := reader.ReadString('\n')
 					id = strings.Replace(id, "\n", "", -1)
 					
-					_, err := seller-contract.SubmitTransaction("RenewRequest", id)
+					_, err := contract.SubmitTransaction("RenewRequest", id)
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 						break
@@ -307,7 +313,7 @@ func main() {
 					id, _ := reader.ReadString('\n')
 					id = strings.Replace(id, "\n", "", -1)
 					
-					asset, err := seller-contract.EvaluateTransaction("ReadAsset", id)
+					asset, err := contract.EvaluateTransaction("ReadAsset", id)
 					if err != nil {
 						log.Fatalf("Errore nella transazione: %v\n", err)
 						break
@@ -327,6 +333,28 @@ func main() {
 	}
 
 	log.Println("============ Terminazione dell'applicazione ============")
+}
+
+func format_print(result []byte) {
+	sresult := string(result)
+	if sresult == "" {
+		return
+	}
+	sresult = strings.Replace(sresult, "[", "", -1)
+	sresult = strings.Replace(sresult, "]", "", -1)
+	sresult = strings.Replace(sresult, "},", "||", -1)
+	sresult = strings.Replace(sresult, "}", "", -1)
+	sresult = strings.Replace(sresult, "{", "", -1)
+	sresult = strings.Replace(sresult, "\"", "", -1)
+	results := strings.Split(sresult, "||")
+	
+	for _, el := range results {
+		fmt.Println("=====")
+		for _, field := range strings.Split(el, ",") {
+			dict := strings.Split(field, ":")
+			fmt.Println(dict[0] + ":",dict[1])
+		}
+	}
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
